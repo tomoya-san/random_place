@@ -18,15 +18,17 @@ def get_user_input():
     Returns:
         keyword (str): place to search
         min_rating (float): minimum rating
+        max_distance (float): searching radius
     """
     keyword = str(input('Where do you want to go? (cafe, restaurant, ...): '))
     min_rating = float(input('What is the minimum rating?:  '))
+    max_distance = float(input('How far can you walk? (meters): '))
     while True:
         if min_rating < 0.0 or 5.0 < min_rating:
             min_rating = float(input('What is the minimum rating? (enter a float between 0 and 5):  '))
         else:
             break
-    return keyword, min_rating
+    return keyword, min_rating, max_distance
 
 def get_current_location():
     """Gets current location from GeoJS API and returns coordinates.
@@ -124,12 +126,15 @@ def main():
     GMAPS_API_KEY = os.getenv('gmaps_api_key')
     map_client = googlemaps.Client(key=GMAPS_API_KEY)
 
-    keyword, min_rating = get_user_input()
+    keyword, min_rating, max_distance = get_user_input()
     current_location = get_current_location()
-    max_distance = 1_000
     place_list = get_places_nearby(map_client, keyword, current_location, max_distance)
-    high_rating_place_list = get_high_rating_places(place_list, min_rating)
-    lat, lng = get_random_place(high_rating_place_list)
-    print(f'http://maps.google.com/maps?q={lat},{lng}+(My+Point)&z=14&ll={lat},{lng}')
+    if len(place_list) == 0:
+        print(f"There were no matching '{keyword}' nearby.")
+        return
+    else:
+        high_rating_place_list = get_high_rating_places(place_list, min_rating)
+        lat, lng = get_random_place(high_rating_place_list)
+        print(f'http://maps.google.com/maps?q={lat},{lng}+(My+Point)&z=14&ll={lat},{lng}')
 
 main()
